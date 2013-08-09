@@ -1,20 +1,17 @@
 #!/usr/bin/env ruby
-require 'AWS'
 require 'rubygems'
 require 'getopt/std'
-
-ACCESS_KEY_ID = ''
-SECRET_ACCESS_KEY = ''
-
-$cw = AWS::Cloudwatch::Base.new(:access_key_id => ACCESS_KEY_ID, :secret_access_key => SECRET_ACCESS_KEY)
+require 'AWS'
 
 $timeperiod = 300
 http2xx = 0
 http5xx = 0
 warning = 8
 critical = 10
+access_key_id = ''
+secret_access_key = ''
 
-opt = Getopt::Std.getopts("c:w:l:")
+opt = Getopt::Std.getopts("c:w:k:s:")
 
 if opt["c"]
   critical = opt["c"].to_i
@@ -23,6 +20,24 @@ end
 if opt["w"]
   warning = opt["w"].to_i
 end
+
+if opt["k"]
+  access_key_id = opt["k"]
+end
+
+if opt["s"]
+  secret_access_key = opt["s"]
+end
+
+puts "#{secret_access_key} - #{access_key_id}"
+
+begin
+  $cw = AWS::Cloudwatch::Base.new(:access_key_id => access_key_id, :secret_access_key => secret_access_key)
+rescue Exception => e
+  puts 'Unknown! - Exception:', e.inspect
+  exit 3
+end
+
 
 def get_stats(httpcode)
   res = $cw.get_metric_statistics(:namespace => "AWS/ELB", :measure_name => httpcode, :statistics => "Sum", :period => $timeperiod, :start_time => (Time.now() - $timeperiod) )
