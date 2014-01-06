@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'getopt/std'
+require 'AWS'
+
+$timeperiod = 300
+warning = 5
+critical = 10
+access_key_id = ''
+secret_access_key = ''
+dbinstance = ''
+
+opt = Getopt::Std.getopts("c:w:k:s:H:")
+
+if opt["c"]
+  critical = opt["c"].to_i
+end
+
+if opt["w"]
+  warning = opt["w"].to_i
+end
+
+if opt["k"]
+  access_key_id = opt["k"]
+end
+
+if opt["s"]
+  secret_access_key = opt["s"]
+end
+
+if opt["H"]
+  dbinstance = opt["H"]
+end  
+
+begin
+  $cw = AWS::Cloudwatch::Base.new(:access_key_id => access_key_id, :secret_access_key => secret_access_key)
+rescue Exception => e
+  puts 'Unknown! - Exception:', e.inspect
+  exit 3
+end
+
+
+def get_stats(instance)
+  res = $cw.get_metric_statistics(:namespace => "AWS/RDS", :measure_name => "FreeStorageSpace", :statistics => "Average", :dimensions => "DBInstanceIdentifier=#{instance}", :period => $timeperiod, :start_time => (Time.now() - $timeperiod) )
+  begin
+    ret = res['GetMetricStatisticsResult']['Datapoints']['member'].first['Average'].to_f
+  rescue
+    ret = 0
+  end
+  return ret
+end
+
+avail_space = get_stats(dbinstance) / 1024**3
+
+status = 'Unknown'
+exitcode = 3
+
+if avail_space > warning
+  status = 'OK'
+  exitcode = 0
+end
+if avail_space <= warning
+  status = 'Warning'
+  exitcode = 1
+end
+if avail_space <= critical
+  status = 'Critical'
+  exitcode = 2
+end
+
+puts "#{status} - #{avail_space.round(2)}GB available"
+exit exitcode
+
