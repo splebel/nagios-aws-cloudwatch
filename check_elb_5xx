@@ -67,6 +67,6 @@ if rate >= critical
   exitcode = 2
 end
 
-puts "#{status} #{rate}% - 2xx:#{http2xx} 5xx:#{http5xx}"
+puts "#{status} #{rate}% - 2xx:#{http2xx} 5xx:#{http5xx} | 'http_5xx'=#{rate}%"
 exit exitcode
 

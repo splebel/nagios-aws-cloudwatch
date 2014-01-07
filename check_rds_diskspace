@@ -68,6 +68,6 @@ if avail_space <= critical
   exitcode = 2
 end
 
-puts "#{status} - #{avail_space.round(2)}GB available"
+puts "#{status} - #{avail_space.round(2)}GB available | 'available_space'=#{avail_space.round(2)}GB"
 exit exitcode
 
