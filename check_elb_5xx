@@ -49,8 +49,14 @@ end
 
 http2xx = get_stats('HTTPCode_Backend_2XX')
 http5xx = get_stats('HTTPCode_Backend_5XX')
+httpreq = http2xx + http5xx
 
-rate = http5xx * 100 / ( http2xx + http5xx )
+if httpreq > 0
+  rate = http5xx * 100 / httpreq
+else
+  rate = 0
+end
+
 status = 'Unknown'
 exitcode = 3
 
